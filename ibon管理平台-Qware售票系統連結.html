@@ -52,9 +52,16 @@
 <body onload="checkSession()">
     <div id="loginScreen" style="text-align: center; margin-top: 100px; font-family: sans-serif;">
         <h2 style="color: #333; font-size: 32px; font-weight: bold; margin-bottom: 30px;">請輸入密碼進入 Qware 售票系統連結</h2>
-        <input type="password" id="pwdInput"
-            style="font-size: 24px; padding: 10px; width: 300px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px;"
-            placeholder="請輸入密碼" onkeypress="if(event.keyCode===13){checkPassword();}">
+        <div style="position: relative; display: inline-block; margin-bottom: 20px;">
+            <input type="password" id="pwdInput"
+                style="font-size: 24px; padding: 10px 50px 10px 10px; width: 300px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;"
+                placeholder="請輸入密碼" onkeypress="if(event.keyCode===13){checkPassword();}">
+            <span id="togglePassword" onclick="togglePwdVisibility()"
+                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 24px; user-select: none; opacity: 0.5;"
+                title="顯示/隱藏密碼">
+                👁️
+            </span>
+        </div>
         <br />
         <button type="button" onclick="checkPassword()"
             style="font-size: 24px; padding: 10px 40px; color: white; background-color: #336799; border: none; border-radius: 5px; cursor: pointer;">登入</button>
@@ -244,6 +251,18 @@
                 var input = document.getElementById('pwdInput');
                 if (input && document.getElementById('loginScreen').style.display !== 'none') {
                     input.focus();
+                }
+            }
+
+            function togglePwdVisibility() {
+                var input = document.getElementById('pwdInput');
+                var icon = document.getElementById('togglePassword');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.style.opacity = '1';  // 提高透明度表示顯示狀態
+                } else {
+                    input.type = 'password';
+                    icon.style.opacity = '0.5'; // 降低透明度表示隱藏狀態
                 }
             }
         </script>
