@@ -677,11 +677,92 @@
             $('#ticket-quantity').trigger('change');
             $('input[name="invoiceType"]:checked').trigger('change');
 
+            // 定義每個獨立欄位的檢驗規則
+            var checkInput = function ($el) {
+                var id = $el.attr('id');
+                var val = $el.val() ? $el.val().trim() : '';
+
+                if (id === 'member-email-input') {
+                    if (!val) return '請輸入會員 E-mail';
+                    if (val.indexOf('@') === -1 || /[\u4E00-\u9FA5]/.test(val)) return 'E-mail 格式不正確，請重新輸入';
+                }
+                if (id === 'notify-email-input' && $('#notify-email-group').is(':visible')) {
+                    if (!val) return '請輸入通知收件 E-mail';
+                    if (val.indexOf('@') === -1 || /[\u4E00-\u9FA5]/.test(val)) return '通知收件 E-mail 格式不正確';
+                }
+                if (id === 'member-name-input') {
+                    if (!val) return '請輸入會員姓名';
+                }
+                if (id === 'member-phone-input') {
+                    if (!val) return '請輸入聯絡電話';
+                    if (!/^\d+$/.test(val)) return '聯絡電話格式錯誤，請輸入數字';
+                }
+                if (id === 'order-number-input') {
+                    if (!val) return '請輸入訂單編號';
+                    if (val.length !== 14 || !/^[AEae]/.test(val)) return '訂單編號格式錯誤，需為14碼英數字(開頭為A或E)';
+                }
+                if (id === 'activity-name-select') {
+                    if (val === '請選擇' || !val) return '請選擇活動名稱';
+                }
+                if (id === 'activity-date-input') {
+                    if (!val) return '請選擇活動演出日期';
+                }
+                if (id === 'ticket-quantity') {
+                    if (isNaN(parseInt(val))) return '請選擇退票張數';
+                }
+                if ($el.hasClass('ticket-content-input')) {
+                    if (!val) return '請完整填寫票券內容';
+                }
+                if ($el.hasClass('ticket-price-input')) {
+                    if (!val) return '請輸入票價';
+                    if (!/^\d+$/.test(val)) return '票價只能輸入數字';
+                }
+
+                if ($('input[name="invoiceType"]:checked').val() === 'THREE_COPIES') {
+                    if (id === 'invoice-title-input' && !val) return '請輸入發票抬頭';
+                    if (id === 'invoice-tax-id-input') {
+                        if (!val) return '請輸入統一編號';
+                        if (val.length !== 8) return '統一編號格式錯誤(須為8碼)';
+                    }
+                    if (id === 'invoice-address-input' && !val) return '請輸入發票寄送地址';
+                }
+
+                if ($('#refund-account-card').is(':visible')) {
+                    if (id === 'bank-name-input' && !val) return '請輸入銀行名稱';
+                    if (id === 'bank-code-input') {
+                        if (!val) return '請輸入銀行代碼';
+                        if (!/^\d{3}$/.test(val)) return '銀行代碼格式錯誤(須為3碼數字)';
+                    }
+                    if (id === 'bank-branch-name-input' && !val) return '請輸入分行名稱';
+                    if (id === 'bank-account-name-input' && !val) return '請輸入戶名';
+                    if (id === 'bank-account-number-input') {
+                        if (!val) return '請輸入帳號';
+                        if (!/^\d+$/.test(val)) return '帳號格式錯誤(只能是數字)';
+                    }
+                }
+                return '';
+            };
+
+            // 在離開焦點或改變選項時進行即時獨立驗證
+            $(document).on('blur change', 'input[type="text"], input[type="date"], select', function () {
+                var errorMsg = checkInput($(this));
+                var $error = $(this).siblings('.validation-error');
+
+                if (errorMsg) {
+                    if ($error.length === 0) {
+                        $error = $('<div class="validation-error" style="color: #dc3545; font-size: 0.875em; margin-top: 4px;"></div>');
+                        $(this).after($error);
+                    }
+                    $error.text(errorMsg).show();
+                } else {
+                    $error.hide();
+                }
+            });
+
             function runValidations() {
                 var isValid = true;
                 var firstErrorEl = null;
 
-                // 清除所有之前的錯誤訊息
                 $('.validation-error').hide();
 
                 var showError = function (selector, msg) {
@@ -699,79 +780,21 @@
                     isValid = false;
                 };
 
-                // 會員 E-mail
-                var email = $('#member-email-input').val().trim();
-                if (!email) { showError('#member-email-input', '請輸入會員 E-mail'); }
-                else if (email.indexOf('@') === -1 || /[\u4E00-\u9FA5]/.test(email)) { showError('#member-email-input', 'E-mail 格式不正確，請重新輸入'); }
-
-                // 通知收件 E-mail
-                if ($('#notify-email-group').is(':visible')) {
-                    var nEmail = $('#notify-email-input').val().trim();
-                    if (!nEmail) { showError('#notify-email-input', '請輸入通知收件 E-mail'); }
-                    else if (nEmail.indexOf('@') === -1 || /[\u4E00-\u9FA5]/.test(nEmail)) { showError('#notify-email-input', '通知收件 E-mail 格式不正確'); }
-                }
-
-                // 會員姓名
-                if (!$('#member-name-input').val().trim()) { showError('#member-name-input', '請輸入會員姓名'); }
-
-                // 購票者聯絡電話
-                var phone = $('#member-phone-input').val().trim();
-                if (!phone) { showError('#member-phone-input', '請輸入聯絡電話'); }
-                else if (!/^\d+$/.test(phone)) { showError('#member-phone-input', '聯絡電話格式錯誤，請輸入數字'); }
-
-                // 訂單編號
-                var orderNo = $('#order-number-input').val().trim();
-                if (!orderNo) { showError('#order-number-input', '請輸入訂單編號'); }
-                else if (orderNo.length !== 14 || !/^[AEae]/.test(orderNo)) { showError('#order-number-input', '訂單編號格式錯誤，需為14碼英數字(開頭為A或E)'); }
-
-                // 活動名稱
-                if ($('#activity-name-select').val() === '請選擇' || !$('#activity-name-select').val()) { showError('#activity-name-select', '請選擇活動名稱'); }
-
-                // 活動演出日期
-                if (!$('#activity-date-input').val()) { showError('#activity-date-input', '請選擇活動演出日期'); }
-
-                // 退票張數
-                var ticketCount = parseInt($('#ticket-quantity').val());
-                if (isNaN(ticketCount)) { showError('#ticket-quantity', '請選擇退票張數'); }
-
-                // 票券內容與票價
-                var actualTicketCount = 0;
-                $('.ticket-content-input').each(function () {
-                    actualTicketCount++;
-                    if (!$(this).val().trim()) { showError(this, '請完整填寫票券內容'); }
-                    var $priceEl = $(this).closest('.col-lg-10').find('.ticket-price-input');
-                    var price = $priceEl.val().trim();
-                    if (!price) { showError($priceEl, '請輸入票價'); }
-                    else if (!/^\d+$/.test(price)) { showError($priceEl, '票價只能輸入數字'); }
+                // 檢查所有可見文字欄位與選單
+                $('input[type="text"]:visible, input[type="date"]:visible, select:visible').each(function () {
+                    var msg = checkInput($(this));
+                    if (msg) showError(this, msg);
                 });
 
-                // 實際張數驗證 (防呆)
-                if (!isNaN(ticketCount) && actualTicketCount !== ticketCount) {
+                // 防呆張數
+                var ticketCount = parseInt($('#ticket-quantity').val());
+                var actualTicketCount = $('.ticket-content-input').length;
+                if (!isNaN(ticketCount) && actualTicketCount !== ticketCount && ticketCount > 0) {
                     showError('#ticket-quantity', '退票張數與票券資料不一致，請重新選擇');
                 }
 
-                // 發票開立方式
-                var invoiceType = $('input[name="invoiceType"]:checked').val();
-                if (invoiceType === 'THREE_COPIES') {
-                    if (!$('#invoice-title-input').val().trim()) { showError('#invoice-title-input', '請輸入發票抬頭'); }
-                    var taxId = $('#invoice-tax-id-input').val().trim();
-                    if (!taxId) { showError('#invoice-tax-id-input', '請輸入統一編號'); }
-                    else if (taxId.length !== 8) { showError('#invoice-tax-id-input', '統一編號格式錯誤(須為8碼)'); }
-                    if (!$('#invoice-address-input').val().trim()) { showError('#invoice-address-input', '請輸入發票寄送地址'); }
-                }
-
-                // 銀行帳戶
+                // 檔案上傳特別檢查
                 if ($('#refund-account-card').is(':visible')) {
-                    if (!$('#bank-name-input').val().trim()) { showError('#bank-name-input', '請輸入銀行名稱'); }
-                    var bankCode = $('#bank-code-input').val().trim();
-                    if (!bankCode) { showError('#bank-code-input', '請輸入銀行代碼'); }
-                    else if (!/^\d{3}$/.test(bankCode)) { showError('#bank-code-input', '銀行代碼格式錯誤(須為3碼數字)'); }
-                    if (!$('#bank-branch-name-input').val().trim()) { showError('#bank-branch-name-input', '請輸入分行名稱'); }
-                    if (!$('#bank-account-name-input').val().trim()) { showError('#bank-account-name-input', '請輸入戶名'); }
-                    var accountNo = $('#bank-account-number-input').val().trim();
-                    if (!accountNo) { showError('#bank-account-number-input', '請輸入帳號'); }
-                    else if (!/^\d+$/.test(accountNo)) { showError('#bank-account-number-input', '帳號格式錯誤(只能是數字)'); }
-
                     var fileList = $('#bank-passbook-file')[0].files;
                     if (fileList.length === 0) {
                         showError('#btn-select-file', '請上傳存摺影本');
@@ -806,25 +829,6 @@
 
                 return isValid;
             }
-
-            // 訂單編號離開時驗證並提示
-            $('#order-number-input').on('blur', function () {
-                var val = $(this).val();
-
-                // 為了單一欄位檢查，先清除此欄位的錯誤
-                $(this).siblings('.validation-error').hide();
-
-                if (val.length > 0 && !/^[AE]/.test(val)) {
-                    var $error = $(this).siblings('.validation-error');
-                    if ($error.length === 0) {
-                        $error = $('<div class="validation-error" style="color: #dc3545; font-size: 0.875em; margin-top: 4px;"></div>');
-                        $(this).after($error);
-                    }
-                    $error.text('訂單編號限輸入14碼英數字(開頭需為A或E)').show();
-                    $('html, body').animate({ scrollTop: $(this).offset().top - 100 }, 300);
-                    $(this).focus();
-                }
-            });
 
             // 預覽功能
             $('#btn-preview, #btn-submit').on('click', function (e) {
