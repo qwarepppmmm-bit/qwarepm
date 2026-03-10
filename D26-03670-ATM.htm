@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="format-detection" content="telephone=no">
+    <title>Document</title>
+    <link href="https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/flexslider.css" rel="stylesheet"
+        type="text/css" media="all">
+    <link href="https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/fonts/font-awesome/css/font-awesome.css"
+        rel="stylesheet" type="text/css" media="all">
+    <link href="https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/style.css" rel="stylesheet" type="text/css"
+        media="all">
+    <link href="https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/fixedbox.css" rel="stylesheet"
+        type="text/css">
+    <link href="https://qwareticket-asyscdn.azureedge.net/QWARE_TICKET/css/SpryAssets/SpryMenuBarHorizontal.css"
+        rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://ticket.ibon.com.tw/css/ibon.min.css?v2.0">
+    <link rel="stylesheet" href="https://ticket.ibon.com.tw/css/ibon_v2.min.css?v2.0">
+    <link rel="stylesheet" href="https://ticket.ibon.com.tw/css/jquery-ui.min.css?v2.0">
+    <link rel="stylesheet" href="https://ticket.ibon.com.tw/css/layout.min.css?v2.2">
+    <link rel="stylesheet" href="https://ticket.ibon.com.tw/css/jquery.fancyboxIII.min.css">
+    <link rel="stylesheet" href="https://orders.ibon.com.tw/application/dist/ibon_v2.min.css">
+    <link rel="stylesheet"
+        href="https://orders.ibon.com.tw/application/dist/plugins/bootstrap-datepicker/css/bootstrap-datepicker.min.css">
+
+    <style>
+        .outline-primary-text-white .btn-outline-primary:not(:disabled):not(:disabled).active,
+        .outline-primary-text-white .btn-outline-primary:not(:disabled):not(:disabled):active {
+            color: #fff;
+        }
+
+        .outline-primary-text-white .btn-outline-primary:not(:disabled):not(:disabled).hover,
+        .outline-primary-text-white .btn-outline-primary:not(:disabled):not(:disabled):hover {
+            color: #fff;
+        }
+
+        .btn-sm,
+        .btn-group-sm>.btn {
+            line-height: 2;
+        }
+
+        #content .detail-list {
+            cursor: pointer;
+            padding: 1rem 2rem;
+            color: #eb6e9a;
+        }
+
+        .NEW-STL-detail-list-box {
+            border: 1px solid rgba(0, 0, 0, 0.125);
+            border-radius: calc(.25rem - 1px) calc(.25rem - 1px) 0 0;
+        }
+
+        #content .close-icon {
+            cursor: pointer;
+            padding: 1rem 2rem;
+            color: #eb6e9a;
+        }
+
+        #content .close-icon::after {
+            float: right;
+            content: "\f139";
+            font-weight: 900;
+        }
+
+        #content select option[selected] {
+            color: #495057;
+        }
+
+        /* 讓圖標有旋轉動畫感 */
+        #content .close-icon::after {
+            transition: transform 0.3s ease;
+        }
+
+        /* 當標題帶有 .is-closed 類別時，旋轉圖標 (假設原本 \f139 是向上箭頭) */
+        #content .close-icon.is-closed::after {
+            transform: rotate(180deg);
+        }
+
+        /* 控制緊接在 .is-closed 標題後的 .card-body 隱藏 */
+        .close-icon.is-closed+.card-body {
+            display: none;
+        }
+
+        .form-group-spacing-mt24 {
+            margin-top: -8px;
+        }
+
+        .form-group-spacing-mb32 {
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 991px) {
+            .form-group-spacing-mt24 {
+                margin-top: -24px;
+            }
+
+            .form-group-spacing-mb32 {
+                margin-bottom: 16px;
+            }
+
+            .form-group-select-mb-0 {
+                margin-bottom: 0;
+
+            }
+        }
+
+        .bullet-list {
+            list-style-type: none;
+            padding-left: 1em;
+            margin-bottom: 0;
+        }
+
+        .bullet-list li {
+            text-indent: -1em;
+            margin-bottom: 4px;
+        }
+
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            overflow-y: auto;
+            padding: 40px 20px;
+        }
+
+        .preview-content-box {
+            background-color: #fff;
+            padding: 32px;
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="content">
+        <div class="container">
+            <div id="ticket-wrap">
+                <div id="order-wrap">
+                    <h1 class="title">
+                        <span>ibon 售票網退票申請</span>
+                    </h1>
+                    <div class="card">
+                        <h5 class="card-header">退票說明</h5>
+                        <div class="card-body">
+                            本表單僅受理特定節目之展演活動票、運動票 未取票券/電子票且整筆訂單之退票。多筆不同訂單請分次填寫。
+                            若該節目開放加購高鐵車票，且您加購高鐵車票尚未使用且未超過車票退票期限，請先將高鐵車票辦理退票後，再行申請退票。請自行注意活動退票期限，若退票申請逾期，恕不受理。
+                            若只要部分退票或有加購高鐵票，且於高鐵車站辦理退票者請先取票後寄至ibon退票小組申請退票。 郵資
+                            、轉帳手續費及取票手續費等非屬票價部份不在退費範圍之內。退票作業依據各商品、節目、售票系統及活動主辦方之公告方式規範為準，請詳見各商品、節目活動頁面之說明，如無其他公告則依以下方式辦理退票。請注意切勿親送，收件地址現場無法受理(為避免爭議，必須透過掛號或快遞等第三方郵寄系統配送並簽收）。
+                            <ul class="bullet-list" style="margin-top: 8px;">
+                                <li>˙售票系統票券：請洽各售票系統（票面Logo為各售票系統 Logo）。</li>
+                                <li>˙主辦單位退票：如退票方為『主辦單位』請洽各活動公告或洽主辦。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h5 class="card-header">會員/購票資料(以下皆為必填欄位)</h5>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">會員 E-mail</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="member-email-input" class="form-control" value=""
+                                        placeholder="用於會員登入，以及接收單與退通知">
+                                </div>
+                            </div>
+                            <div class="form-group row form-group-spacing-mt24">
+                                <label class="col-lg-2 col-form-label"></label>
+                                <div class="col-lg-10">
+                                    <div class="custom-control custom-checkbox mr-sm-2">
+                                        <input type="checkbox" formcontrolname="TermsAgree" id="diff-email-check"
+                                            class="custom-control-input ng-untouched ng-pristine ng-invalid">
+                                        <label for="diff-email-check" class="custom-control-label">
+                                            使用不同的 E-mail 接收通知
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group row" id="notify-email-group" style="display: none;">
+                                <label class="col-lg-2 col-form-label">通知收件 E-mail</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="notify-email-input" class="form-control" value=""
+                                        placeholder="請輸入常用的 E-mail">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">會員姓名</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="member-name-input" class="form-control" value=""
+                                        placeholder="用於會員姓名或購票者姓名">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">購票者聯絡電話</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="member-phone-input" class="form-control" value=""
+                                        placeholder="請輸入購票流程中的電話" maxlength="10">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">訂單編號</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="order-number-input" class="form-control" value=""
+                                        placeholder="請輸入Axxxxxxxxxxxxx或Exxxxxxxxxxxxx(共14碼)" maxlength="14">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <h6 class="col-lg-2 col-form-label">購買票券類別</h6>
+                                <div class="col-lg-10">
+                                    <span>
+                                        <form class="">
+                                            <fieldset class="form-group form-group-select-mb-0">
+                                                <div tabindex="-1" role="group" class="bv-no-focus-ring">
+                                                    <div role="radiogroup" tabindex="-1"
+                                                        class="outline-primary-text-white btn-group-toggle btn-group btn-group-sm bv-no-focus-ring ticket-category-group"
+                                                        style="width: 100%;">
+                                                        <label
+                                                            class="btn btn-outline-primary btn-sm ticket-type-a active">
+                                                            <input type="radio" name="ticketCategory"
+                                                                value="ENTERTAINMENT" checked>娛樂
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm ticket-type-a">
+                                                            <input type="radio" name="ticketCategory" value="SPORTS">運動
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm ticket-type-a">
+                                                            <input type="radio" name="ticketCategory" value="MOVIE">電影
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm ticket-type-e"
+                                                            style="display: none;">
+                                                            <input type="radio" name="ticketCategory"
+                                                                value="EXHIBITION">展覽
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm ticket-type-e"
+                                                            style="display: none;">
+                                                            <input type="radio" name="ticketCategory" value="TRAVEL">旅遊
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </fieldset>
+                                        </form>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <h6 class="col-lg-2 col-form-label">請選擇付款方式</h6>
+                                <div class="col-lg-10">
+                                    <span>
+                                        <form class="">
+                                            <fieldset class="form-group form-group-select-mb-0">
+                                                <div tabindex="-1" role="group" class="bv-no-focus-ring">
+                                                    <div role="radiogroup" tabindex="-1"
+                                                        class="outline-primary-text-white btn-group-toggle btn-group btn-group-sm bv-no-focus-ring payment-method-group"
+                                                        style="width: 100%;">
+                                                        <label class="btn btn-outline-primary btn-sm active">
+                                                            <input type="radio" name="paymentMethod" value="CREDIT_CARD"
+                                                                checked>刷卡(含行動支付)
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm">
+                                                            <input type="radio" name="paymentMethod" value="ATM">ATM虛擬帳號
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm">
+                                                            <input type="radio" name="paymentMethod" value="IBON">ibon付現
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </fieldset>
+                                        </form>
+                                    </span>
+
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <h6 class="col-lg-2 col-form-label">使用文化幣/動滋券</h6>
+                                <div class="col-lg-10">
+                                    <span>
+                                        <form class="">
+                                            <fieldset class="form-group form-group-select-mb-0">
+                                                <div tabindex="-1" role="group" class="bv-no-focus-ring">
+                                                    <div role="radiogroup" tabindex="-1"
+                                                        class="outline-primary-text-white btn-group-toggle btn-group btn-group-sm bv-no-focus-ring coupon-type-group"
+                                                        style="width: 100%;">
+                                                        <label class="btn btn-outline-primary btn-sm active">
+                                                            <input type="radio" name="couponType" value="NONE"
+                                                                checked>未使用
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm">
+                                                            <input type="radio" name="couponType" value="CULTURE">文化幣
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm">
+                                                            <input type="radio" name="couponType" value="SPORT">動滋券
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </fieldset>
+                                        </form>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group row form-group-spacing-mb32" id="coupon-amount-group"
+                                style="display: none;">
+                                <label class="col-lg-2 col-form-label">抵用金額</label>
+                                <div class="col-lg-10">
+                                    <input type="text" class="form-control" value="" placeholder="請輸入抵用金額">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <h6 class="col-lg-2 col-form-label">是否取票</h6>
+                                <div class="col-lg-10">
+                                    <span>
+                                        <form class="">
+                                            <fieldset class="form-group form-group-select-mb-0">
+                                                <div tabindex="-1" role="group" class="bv-no-focus-ring">
+                                                    <div role="radiogroup" tabindex="-1"
+                                                        class="outline-primary-text-white btn-group-toggle btn-group btn-group-sm bv-no-focus-ring"
+                                                        style="width: 100%;">
+                                                        <label class="btn btn-outline-primary btn-sm active">
+                                                            <input type="radio" class="" value="DONATE">未取
+                                                        </label>
+                                                        <label class="btn btn-outline-primary btn-sm">
+                                                            <input type="radio" class="" value="TWO_CPOIES">已取
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </fieldset>
+                                        </form>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h5 class="card-header close-icon is-closed">退票申請內容</h5>
+                        <div class="card-body">
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">活動名稱</label>
+                                <div class="col-lg-10">
+                                    <select type="text" id="activity-name-select" class="form-control">
+                                        <option selected>請選擇</option>
+                                        <option>2026 FTISLAND CONCERT ‘FTSODE’ in TAIPEI</option>
+                                        <option>第40屆金唱片頒獎典禮 The 40th Golden Disc Awards</option>
+                                        <option>2026真愛秀．藍寶石大歌廳</option>
+                                        <option>2026台維斯盃國際男子網球團體錦標賽世界一級升降賽</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">活動演出日期</label>
+                                <div class="col-sm-10 entryarea">
+                                    <input type="date" id="activity-date-input" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">退票張數</label>
+                                <div class="col-lg-10">
+                                    <select type="text" id="ticket-quantity" class="form-control">
+                                        <option selected>請選擇</option>
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                        <option>6</option>
+                                        <option>7</option>
+                                        <option>8</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="ticket-fields-wrapper">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h5 class="card-header close-icon is-closed">退票手續費發票開立方式</h5>
+                        <div class="card-body">
+                            <div role=" radiogroup" tabindex="-1"
+                                class="outline-primary-text-white btn-group-toggle btn-group btn-group-sm bv-no-focus-ring"
+                                style="width: 100%; margin-bottom: 16px;">
+                                <label class="btn btn-outline-primary btn-sm active">
+                                    <input type="radio" name="invoiceType" value="DONATE" checked>捐贈
+                                </label>
+                                <label class="btn btn-outline-primary btn-sm">
+                                    <input type="radio" name="invoiceType" value="TWO_COPIES">二聯式雲端發票
+                                </label>
+                                <label class="btn btn-outline-primary btn-sm">
+                                    <input type="radio" name="invoiceType" value="THREE_COPIES">三聯式紙本(以下必填)
+                                </label>
+                            </div>
+                            <div id="invoice-fields-wrapper" style="display: none;">
+                                <div class="form-group row">
+                                    <label class="col-lg-2 col-form-label">發票抬頭</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="invoice-title-input" class="form-control" value=""
+                                            placeholder="例如：天寶股份有限公司">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-lg-2 col-form-label">統一編號</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="invoice-tax-id-input" class="form-control" value=""
+                                            placeholder="例如：09878901">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-lg-2 col-form-label">發票寄送地址</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="invoice-address-input" class="form-control" value=""
+                                            placeholder="例如：台北市內湖區石潭路161號">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-lg-2 col-form-label">收件人姓名</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="invoice-recipient-name-input" class="form-control"
+                                            value="" placeholder="例如：王美花">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-lg-2 col-form-label">收件人電話</label>
+                                    <div class="col-lg-10">
+                                        <input type="text" id="invoice-recipient-phone-input" class="form-control"
+                                            value="" placeholder="例如：0935678901">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="refund-account-card" style="display: none;">
+                        <h5 class="card-header close-icon is-closed">退款帳戶資訊</h5>
+                        <div class="card-body">
+
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">銀行名稱</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="bank-name-input" class="form-control" value=""
+                                        placeholder="例如：中國信託商業銀行">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">銀行代碼(3碼)</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="bank-code-input" class="form-control" value=""
+                                        placeholder="例如：822">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">分行名稱</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="bank-branch-name-input" class="form-control" value=""
+                                        placeholder="例如：內湖分行">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">戶名</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="bank-account-name-input" class="form-control" value=""
+                                        placeholder="例如：王美花">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">帳號</label>
+                                <div class="col-lg-10">
+                                    <input type="text" id="bank-account-number-input" class="form-control" value=""
+                                        placeholder="例如：060660339390">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-lg-2 col-form-label">存摺影本</label>
+                                <div class="col-lg-10">
+                                    <p style="font-weight: bold; margin-bottom: 8px;">上傳存摺影本 (僅限PDF,JPG，檔案請小於1MB)</p>
+                                    <input type="file" id="bank-passbook-file" accept=".pdf,.jpg,.jpeg"
+                                        style="display: none;">
+                                    <button class="btn btn-pink continue" id="btn-select-file">選擇檔案</button>
+                                    <span id="file-name-display" style="margin-left: 8px; color: #555;">未選擇任何檔案</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h5 class="card-header">服務條款說明(請詳細閱讀)</h5>
+                        <div class="card-body">
+                            <ul class="bullet-list" style="padding-left: 1em;">
+                                <li>˙為維護當事人個資安全，本退票服務僅限當事人申請，填寫本表單提出退票(款)申請作業；一旦安源資訊股份有限公司(以下統稱本公司)收訖退票作業資料，視同您同意本公司進行相關退票作業，包含電話連繫、缺(補)件作業等。
+                                </li>
+                                <li>˙退款流程需約20個工作天（以退票申請文件齊全提供後起算，如遇天候、疫情等不可抗力因素大量退票期間，則不在此限，請於6-8週後再行查詢）。若檢附資料不足、闕漏、錯誤等因素導致無法受理退票(費)或不符退票(費)期限者，因前項情況致影響退票(費)權利者，需自行負擔責任。
+                                </li>
+                                <li>˙於網路購票並使用刷卡服務者：退票款項將扣除相關手續費後刷退至原購票刷卡之信用卡帳單，系統送出後實際退款日期將依發卡行及銀行之作業時間為準，請主動向銀行端查詢退款進度(可能於次期或次次期才會看到有負項退刷明細)。
+                                </li>
+                                <li>˙使用門市ibon現金購票者：退票款項將扣除必要之退票處理手續費及匯款手續費NT$30元後，將款項直接匯入申請人指定的帳戶。</li>
+                                <li>˙開立發票之票券(展覽、旅遊票)，退票作業流程需附上『退票折讓單』，惟若您填寫本『退票申請表單』並勾選同意授權本公司(安源資訊(股)公司)代為處理「銷貨退回、進貨退出或折讓證明單」，則不需檢附折讓單。
+                                </li>
+                            </ul>
+                            <div class="custom-control custom-checkbox mr-sm-2" style="margin-top: 16px;">
+                                <input type="checkbox" formcontrolname="TermsAgree" id="form-check"
+                                    class="custom-control-input ng-untouched ng-pristine ng-invalid">
+                                <label for="form-check" class="custom-control-label">
+                                    本人同意ibon售票系統得使用上述填寫及檢附之資料，並代處理法令要求之相關單據(如發票或折讓單等)，或聯繫/回覆本人之問題。
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center" id="order-edit-buttons">
+                        <button class="btn btn-pink continue" id="btn-preview" style="margin-right: 16px;">預覽</button>
+                        <button class="btn btn-pink continue" id="btn-submit">送出</button>
+                    </div>
+                </div>
+
+                <div id="preview-wrap" class="preview-modal" style="display: none;">
+                    <div class="preview-content-box">
+                        <h1 class="title">
+                            <span>ibon 售票網退票申請 - 預覽確認</span>
+                        </h1>
+                        <div id="preview-content"></div>
+                        <div class="text-center" style="margin-top: 24px;">
+                            <button class="btn btn-secondary continue" id="btn-back-edit"
+                                style="background-color: #6c757d; border-color: #6c757d; color: #fff;">關閉</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // 監聽點擊事件
+            $('.close-icon').on('click', function () {
+                // 切換旋轉圖標與隱藏內容的類別
+                $(this).toggleClass('is-closed');
+            });
+
+            // 監聽同意不同 Email 接收通知的 checkbox
+            $('#diff-email-check').on('change', function () {
+                if ($(this).is(':checked')) {
+                    $('#notify-email-group').slideDown();
+                } else {
+                    $('#notify-email-group').slideUp();
+                }
+            });
+
+            // 處理所有 bootstrap radio button group 的單選效果 (避免多選)
+            $('.btn-group-toggle .btn').on('click', function (e) {
+                // 如果該按鈕是隱藏的話就不處理
+                if ($(this).css('display') === 'none') return;
+
+                $(this).siblings('.btn').removeClass('active');
+                $(this).addClass('active');
+                $(this).find('input[type="radio"]').prop('checked', true).trigger('change');
+            });
+
+            // 監聽付款方式與動滋券選擇
+            $('input[name="paymentMethod"], input[name="couponType"]').on('change', function () {
+                var paymentMethod = $('input[name="paymentMethod"]:checked').val();
+                var couponType = $('input[name="couponType"]:checked').val();
+
+                // 處理退款帳戶資訊顯示邏輯
+                if (paymentMethod === 'ATM' || paymentMethod === 'IBON' || couponType === 'SPORT') {
+                    $('#refund-account-card').slideDown();
+                } else {
+                    $('#refund-account-card').slideUp();
+                }
+
+                // 處理抵用金額顯示邏輯
+                if (couponType === 'CULTURE' || couponType === 'SPORT') {
+                    $('#coupon-amount-group').slideDown();
+                } else {
+                    $('#coupon-amount-group').slideUp();
+                }
+            });
+
+            // 監聽訂單編號輸入 (允許輸入任何英數字，但如果開頭不符會在準備預覽或離開欄位時提報錯誤)
+            $('#order-number-input').on('input', function () {
+                var rawVal = $(this).val();
+
+                // 限制為英數字，並全部轉大寫
+                if (rawVal.length > 0) {
+                    rawVal = rawVal.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                }
+                $(this).val(rawVal);
+
+                var val = rawVal;
+
+                if (val.startsWith('A')) {
+                    $('.ticket-type-a').show();
+                    $('.ticket-type-e').hide();
+
+                    if ($('.ticket-type-e').hasClass('active') || $('.ticket-category-group .active').length === 0) {
+                        $('.ticket-category-group .btn').removeClass('active');
+                        $('.ticket-category-group input').prop('checked', false);
+                        $('.ticket-type-a').first().addClass('active').find('input').prop('checked', true);
+                    }
+                } else if (val.startsWith('E')) {
+                    $('.ticket-type-a').hide();
+                    $('.ticket-type-e').show();
+
+                    if ($('.ticket-type-a').hasClass('active') || $('.ticket-category-group .active').length === 0) {
+                        $('.ticket-category-group .btn').removeClass('active');
+                        $('.ticket-category-group input').prop('checked', false);
+                        $('.ticket-type-e').first().addClass('active').find('input').prop('checked', true);
+                    }
+                } else {
+                    // 不符合 A/E 開頭，這裡預設顯示全部或保持原樣
+                    $('.ticket-type-a, .ticket-type-e').show();
+                }
+            });
+
+            // 動態產生退票數量欄位
+            $('#ticket-quantity').on('change', function () {
+                var num = parseInt($(this).val());
+                var html = '';
+                if (!isNaN(num) && num > 0) {
+                    for (var i = 1; i <= num; i++) {
+                        html += '<div class="form-group row">';
+                        html += '    <label class="col-lg-2 col-form-label">第' + i + '張票</label>';
+                        html += '    <div class="col-lg-10">';
+                        html += '        <input type="text" class="form-control ticket-content-input" value="" placeholder="票券內容，例如：黃3A區_4排10號 或 序號56789">';
+                        html += '        <input type="text" class="form-control ticket-price-input" style="margin-top: 16px;" value="" placeholder="票價，例如：3000">';
+                        html += '    </div>';
+                        html += '</div>';
+                    }
+                }
+                $('#ticket-fields-wrapper').html(html);
+            });
+
+            // 監聽退票手續費發票開立方式
+            $('input[name="invoiceType"]').on('change', function () {
+                var invoiceType = $('input[name="invoiceType"]:checked').val();
+                if (invoiceType === 'THREE_COPIES') {
+                    $('#invoice-fields-wrapper').slideDown();
+                } else {
+                    $('#invoice-fields-wrapper').slideUp();
+                }
+            });
+
+            // 檔案上傳按鈕連動邏輯
+            $('#btn-select-file').on('click', function (e) {
+                e.preventDefault();
+                $('#bank-passbook-file').click();
+            });
+
+            $('#bank-passbook-file').on('change', function () {
+                var fileName = $(this).val().split('\\').pop();
+                if (fileName) {
+                    $('#file-name-display').text(fileName);
+                } else {
+                    $('#file-name-display').text('未選擇任何檔案');
+                }
+            });
+
+            // 初始化執行一次
+            $('#order-number-input').trigger('input');
+            $('input[name="paymentMethod"]:checked').trigger('change');
+            $('#ticket-quantity').trigger('change');
+            $('input[name="invoiceType"]:checked').trigger('change');
+
+            function runValidations() {
+                var isValid = true;
+                var firstErrorEl = null;
+
+                // 清除所有之前的錯誤訊息
+                $('.validation-error').hide();
+
+                var showError = function (selector, msg) {
+                    var $el = $(selector);
+                    var $error = $el.siblings('.validation-error');
+                    if ($error.length === 0) {
+                        $error = $('<div class="validation-error" style="color: #dc3545; font-size: 0.875em; margin-top: 4px;"></div>');
+                        $el.after($error);
+                    }
+                    $error.text(msg).show();
+
+                    if (!firstErrorEl) {
+                        firstErrorEl = $el;
+                    }
+                    isValid = false;
+                };
+
+                // 會員 E-mail
+                var email = $('#member-email-input').val().trim();
+                if (!email) { showError('#member-email-input', '請輸入會員 E-mail'); }
+                else if (email.indexOf('@') === -1 || /[\u4E00-\u9FA5]/.test(email)) { showError('#member-email-input', 'E-mail 格式不正確，請重新輸入'); }
+
+                // 通知收件 E-mail
+                if ($('#notify-email-group').is(':visible')) {
+                    var nEmail = $('#notify-email-input').val().trim();
+                    if (!nEmail) { showError('#notify-email-input', '請輸入通知收件 E-mail'); }
+                    else if (nEmail.indexOf('@') === -1 || /[\u4E00-\u9FA5]/.test(nEmail)) { showError('#notify-email-input', '通知收件 E-mail 格式不正確'); }
+                }
+
+                // 會員姓名
+                if (!$('#member-name-input').val().trim()) { showError('#member-name-input', '請輸入會員姓名'); }
+
+                // 購票者聯絡電話
+                var phone = $('#member-phone-input').val().trim();
+                if (!phone) { showError('#member-phone-input', '請輸入聯絡電話'); }
+                else if (!/^\d+$/.test(phone)) { showError('#member-phone-input', '聯絡電話格式錯誤，請輸入數字'); }
+
+                // 訂單編號
+                var orderNo = $('#order-number-input').val().trim();
+                if (!orderNo) { showError('#order-number-input', '請輸入訂單編號'); }
+                else if (orderNo.length !== 14 || !/^[AEae]/.test(orderNo)) { showError('#order-number-input', '訂單編號格式錯誤，需為14碼英數字(開頭為A或E)'); }
+
+                // 活動名稱
+                if ($('#activity-name-select').val() === '請選擇' || !$('#activity-name-select').val()) { showError('#activity-name-select', '請選擇活動名稱'); }
+
+                // 活動演出日期
+                if (!$('#activity-date-input').val()) { showError('#activity-date-input', '請選擇活動演出日期'); }
+
+                // 退票張數
+                var ticketCount = parseInt($('#ticket-quantity').val());
+                if (isNaN(ticketCount)) { showError('#ticket-quantity', '請選擇退票張數'); }
+
+                // 票券內容與票價
+                var actualTicketCount = 0;
+                $('.ticket-content-input').each(function () {
+                    actualTicketCount++;
+                    if (!$(this).val().trim()) { showError(this, '請完整填寫票券內容'); }
+                    var $priceEl = $(this).closest('.col-lg-10').find('.ticket-price-input');
+                    var price = $priceEl.val().trim();
+                    if (!price) { showError($priceEl, '請輸入票價'); }
+                    else if (!/^\d+$/.test(price)) { showError($priceEl, '票價只能輸入數字'); }
+                });
+
+                // 實際張數驗證 (防呆)
+                if (!isNaN(ticketCount) && actualTicketCount !== ticketCount) {
+                    showError('#ticket-quantity', '退票張數與票券資料不一致，請重新選擇');
+                }
+
+                // 發票開立方式
+                var invoiceType = $('input[name="invoiceType"]:checked').val();
+                if (invoiceType === 'THREE_COPIES') {
+                    if (!$('#invoice-title-input').val().trim()) { showError('#invoice-title-input', '請輸入發票抬頭'); }
+                    var taxId = $('#invoice-tax-id-input').val().trim();
+                    if (!taxId) { showError('#invoice-tax-id-input', '請輸入統一編號'); }
+                    else if (taxId.length !== 8) { showError('#invoice-tax-id-input', '統一編號格式錯誤(須為8碼)'); }
+                    if (!$('#invoice-address-input').val().trim()) { showError('#invoice-address-input', '請輸入發票寄送地址'); }
+                }
+
+                // 銀行帳戶
+                if ($('#refund-account-card').is(':visible')) {
+                    if (!$('#bank-name-input').val().trim()) { showError('#bank-name-input', '請輸入銀行名稱'); }
+                    var bankCode = $('#bank-code-input').val().trim();
+                    if (!bankCode) { showError('#bank-code-input', '請輸入銀行代碼'); }
+                    else if (!/^\d{3}$/.test(bankCode)) { showError('#bank-code-input', '銀行代碼格式錯誤(須為3碼數字)'); }
+                    if (!$('#bank-branch-name-input').val().trim()) { showError('#bank-branch-name-input', '請輸入分行名稱'); }
+                    if (!$('#bank-account-name-input').val().trim()) { showError('#bank-account-name-input', '請輸入戶名'); }
+                    var accountNo = $('#bank-account-number-input').val().trim();
+                    if (!accountNo) { showError('#bank-account-number-input', '請輸入帳號'); }
+                    else if (!/^\d+$/.test(accountNo)) { showError('#bank-account-number-input', '帳號格式錯誤(只能是數字)'); }
+
+                    var fileList = $('#bank-passbook-file')[0].files;
+                    if (fileList.length === 0) {
+                        showError('#btn-select-file', '請上傳存摺影本');
+                    } else {
+                        var fileName = fileList[0].name.toLowerCase();
+                        if (!fileName.endsWith('.pdf') && !fileName.endsWith('.jpg') && !fileName.endsWith('.jpeg')) {
+                            showError('#btn-select-file', '檔案格式錯誤，僅支援 PDF、JPG');
+                        } else if (fileList[0].size > 1024 * 1024) {
+                            showError('#btn-select-file', '檔案大小不可超過 1MB');
+                        }
+                    }
+                }
+
+                // 服務條款
+                if (!$('#form-check').is(':checked')) {
+                    var $checkEl = $('#form-check');
+                    var $error = $checkEl.closest('.form-check').find('.validation-error');
+                    if ($error.length === 0) {
+                        $error = $('<div class="validation-error" style="color: #dc3545; font-size: 0.875em; margin-top: 4px;"></div>');
+                        $checkEl.closest('.form-check').append($error);
+                    }
+                    $error.text('請先閱讀並同意服務條款').show();
+                    if (!firstErrorEl) firstErrorEl = $checkEl;
+                    isValid = false;
+                }
+
+                // 如果有錯誤，滾動至第一個錯誤處
+                if (!isValid && firstErrorEl) {
+                    $('html, body').animate({ scrollTop: firstErrorEl.offset().top - 100 }, 300);
+                    firstErrorEl.focus();
+                }
+
+                return isValid;
+            }
+
+            // 訂單編號離開時驗證並提示
+            $('#order-number-input').on('blur', function () {
+                var val = $(this).val();
+
+                // 為了單一欄位檢查，先清除此欄位的錯誤
+                $(this).siblings('.validation-error').hide();
+
+                if (val.length > 0 && !/^[AE]/.test(val)) {
+                    var $error = $(this).siblings('.validation-error');
+                    if ($error.length === 0) {
+                        $error = $('<div class="validation-error" style="color: #dc3545; font-size: 0.875em; margin-top: 4px;"></div>');
+                        $(this).after($error);
+                    }
+                    $error.text('訂單編號限輸入14碼英數字(開頭需為A或E)').show();
+                    $('html, body').animate({ scrollTop: $(this).offset().top - 100 }, 300);
+                    $(this).focus();
+                }
+            });
+
+            // 預覽功能
+            $('#btn-preview, #btn-submit').on('click', function (e) {
+                e.preventDefault();
+
+                if (!runValidations()) {
+                    return;
+                }
+
+                if ($(this).attr('id') === 'btn-submit') {
+                    // 這裡可以加上未來串接 API 的邏輯
+                    alert('資料驗證成功，準備送出！');
+                    return;
+                }
+
+                var previewHtml = '';
+
+                // 遍歷所有卡片區塊
+                $('#order-wrap .card').each(function () {
+                    var cardTitle = $(this).find('.card-header').text().trim();
+                    // 略過退票說明與服務條款這種純文字宣告版塊
+                    if (cardTitle === '退票說明' || cardTitle === '服務條款說明(請詳細閱讀)') return;
+
+                    // 如果該卡片因連動被隱藏，則不顯示在預覽中
+                    if ($(this).css('display') === 'none') return;
+
+                    var sectionHtml = '<div class="card"><h5 class="card-header">' + cardTitle + '</h5><div class="card-body">';
+                    var hasContent = false;
+
+                    $(this).find('.form-group.row').each(function () {
+                        // 略過隱藏的欄位 (例如未勾選不同的email收件人時)
+                        if ($(this).css('display') === 'none') return;
+
+                        var label = $(this).find('.col-form-label, h6.col-form-label').text().trim();
+                        var valText = '';
+
+                        // 判斷不同類型的輸入值
+                        var textInputs = $(this).find('input[type="text"], input[type="date"]');
+                        if (textInputs.length > 0) {
+                            textInputs.each(function () {
+                                if ($(this).val().trim() !== '') {
+                                    valText += $(this).val().trim() + ' ';
+                                }
+                            });
+                        }
+
+                        var select = $(this).find('select');
+                        if (select.length > 0) {
+                            var selText = select.find('option:selected').text().trim();
+                            if (selText !== '請選擇') valText = selText;
+                        }
+
+                        var checkedRadio = $(this).find('input[type="radio"]:checked');
+                        if (checkedRadio.length > 0) {
+                            valText = checkedRadio.parent().text().trim();
+                        }
+
+                        // 若沒有 label (可能是獨立的 checkbox，例如同意條款或不同信箱)
+                        if (label === '') {
+                            var checkedBox = $(this).find('input[type="checkbox"]:checked');
+                            if (checkedBox.length > 0) {
+                                label = $(this).find('.custom-control-label').text().trim();
+                                valText = '是';
+                            } else {
+                                return; // 未勾選項不顯示
+                            }
+                        }
+
+                        valText = valText.trim();
+                        if (valText === '') {
+                            valText = '<span style="color: #ccc;">(未填寫)</span>';
+                        }
+
+                        sectionHtml += '<div class="row" style="margin-bottom: 12px; border-bottom: 1px solid #f2f2f2; padding-bottom: 8px;">';
+                        sectionHtml += '<div class="col-lg-3 font-weight-bold" style="font-weight: bold; color: #555;">' + label + '</div>';
+                        sectionHtml += '<div class="col-lg-9" style="color: #000; word-break: break-all;">' + valText + '</div>';
+                        sectionHtml += '</div>';
+                        hasContent = true;
+                    });
+
+                    sectionHtml += '</div></div>';
+
+                    if (hasContent) {
+                        previewHtml += sectionHtml;
+                    }
+                });
+
+                if (previewHtml === '') {
+                    previewHtml = '<div class="alert alert-warning">沒有填寫任何資料。</div>';
+                }
+
+                $('#preview-content').html(previewHtml);
+                $('#preview-wrap').fadeIn();
+                $('body').css('overflow', 'hidden');
+            });
+
+            // 返回修改返回表單
+            $('#btn-back-edit').on('click', function (e) {
+                e.preventDefault();
+                $('#preview-wrap').fadeOut();
+                $('body').css('overflow', 'auto');
+            });
+        });
+    </script>
+</body>
+
+</html>
