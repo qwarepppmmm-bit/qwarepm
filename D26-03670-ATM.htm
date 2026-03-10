@@ -659,6 +659,18 @@
                 }
             });
 
+            // 當使用者開始輸入或更改選項時，自動隱藏該欄位的錯誤提示
+            $(document).on('input change', 'input, select', function () {
+                $(this).siblings('.validation-error').hide();
+                // 針對 checkboxes / radio 結構，可能提示訊息放在外層
+                $(this).closest('.form-check').find('.validation-error').hide();
+            });
+
+            // 針對上傳按鈕點擊也一併隱藏錯誤
+            $('#btn-select-file').on('click', function () {
+                $(this).siblings('.validation-error').hide();
+            });
+
             // 初始化執行一次
             $('#order-number-input').trigger('input');
             $('input[name="paymentMethod"]:checked').trigger('change');
