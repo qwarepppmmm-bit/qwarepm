@@ -243,6 +243,23 @@
     </div>
 
     <script>
+        // 設定您的 Google Apps Script Web App URL 來實現「寫入雲端」
+        const GOOGLE_API_URL = ""; // 將取得的網址貼在雙引號內
+
+        // 寫入 Google Sheet 函數
+        async function syncToGoogleSheet(name, meal, drink, remark) {
+            if (!GOOGLE_API_URL) return; // 未設定網址則略過
+            
+            const params = new URLSearchParams({ name, meal, drink, remark });
+            try {
+                // 利用 GET 配合 no-cors 模式，完美繞過所有 CORS 限制寫入資料
+                await fetch(GOOGLE_API_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
+                console.log("✅ 成功發送新增請求至 Google Sheets");
+            } catch (error) {
+                console.error("❌ 寫入雲端失敗:", error);
+            }
+        }
+
         // Initial Data from Google Sheets
         let orderData = [
           { id: 1, name: "高念平", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "冬天不洗澡也要洗衣服吧" },
@@ -362,6 +379,9 @@
                     id: nextId++,
                     name, meal, drink, remark
                 });
+
+                // ✅ 觸發寫入雲端 Google Sheets
+                syncToGoogleSheet(name, meal, drink, remark);
             }
 
             closeModal();
