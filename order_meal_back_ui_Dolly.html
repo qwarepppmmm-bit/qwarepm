@@ -15,6 +15,7 @@
             --text-secondary: #94a3b8;
             --accent-primary: #0ea5e9;
             --accent-gradient: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            --success: #10b981;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-gradient); color: var(--text-primary); min-height: 100vh; display: flex; overflow-x: hidden; }
@@ -90,6 +91,10 @@
         .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; color: white; }
         .btn-primary { background: var(--accent-gradient); box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3); }
         .btn-primary:hover { box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5); transform: translateY(-2px); }
+        
+        .btn-success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.5); }
+        .btn-success:hover { background: rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+
         .btn-icon-action { padding: 0.5rem; border-radius: 0.5rem; background: rgba(255,255,255,0.1); color: white; border: none; cursor: pointer; transition: 0.3s; }
         .btn-icon-action:hover { background: rgba(255,255,255,0.2); }
         .btn-edit { color: #38bdf8; } .btn-edit:hover { background: rgba(56, 189, 248, 0.2); }
@@ -175,7 +180,9 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="searchInput" placeholder="搜尋姓名、餐點或飲品...">
             </div>
-            <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+            </div>
         </div>
 
         <div class="table-container">
@@ -243,103 +250,92 @@
     </div>
 
     <script>
-        // 設定您的 Google Apps Script Web App URL 來實現「寫入雲端」
-        const GOOGLE_API_URL = ""; // 將取得的網址貼在雙引號內
+        // 對接已經部署好的 Google Apps Script 目標網址
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyuSoD2WhNAamQ_VdL6jIf4mCsY4gapEdMDAMwnFjOndKiPLcm22Gb6FAoN9rAX0bztyg/exec';
 
-        // 寫入 Google Sheet 函數
-        async function syncToGoogleSheet(name, meal, drink, remark) {
-            if (!GOOGLE_API_URL) return; // 未設定網址則略過
-            
-            const params = new URLSearchParams({ name, meal, drink, remark });
+        let orderData = [];
+
+        // 讀取遠端訂單資料
+        async function fetchOrders() {
+            const tbody = document.getElementById('orderTableBody');
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">資料同步中，請稍候...</td></tr>`;
             try {
-                // 利用 GET 配合 no-cors 模式，完美繞過所有 CORS 限制寫入資料
-                await fetch(GOOGLE_API_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
-                console.log("✅ 成功發送新增請求至 Google Sheets");
-            } catch (error) {
-                console.error("❌ 寫入雲端失敗:", error);
+                const response = await fetch(GAS_URL + '?action=read', { method: 'GET', redirect: 'follow' });
+                const rawText = await response.text();
+                const result = JSON.parse(rawText);
+                
+                if (result.status === 'success') {
+                    // Mapping backend variables to our UI names:
+                    // Backend returns: id, name, status(Meal), meal(Drink), drink(OK), notes(Remark)
+                    orderData = result.data.map(o => ({
+                        id: o.id,
+                        name: o.name,
+                        meal: o.status,
+                        drink: o.meal,
+                        remark: o.notes
+                    }));
+                    renderData(orderData);
+                } else {
+                    alert('資料讀取失敗：' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("雲端讀取失敗，請確認網路連線。");
             }
         }
-
-        // Initial Data from Google Sheets
-        let orderData = [
-          { id: 1, name: "高念平", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "冬天不洗澡也要洗衣服吧" },
-          { id: 2, name: "游國楷", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 3, name: "謝楷評", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
-          { id: 4, name: "陳春惠", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 5, name: "薛仁奇", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 6, name: "劉道鈞", meal: "爺爺蒲燒魚霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 7, name: "李佳馨", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "都AI" },
-          { id: 8, name: "吳文凱", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
-          { id: 9, name: "吳柔潔", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 10, name: "楊仲文", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 11, name: "蔡恩傑", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
-          { id: 12, name: "陳利和", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 13, name: "吳政憲", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 14, name: "黃明正", meal: "爺爺蒲燒魚霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 15, name: "蕭智鴻", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 16, name: "陳俊良", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 17, name: "陳詩恬", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 18, name: "彭俊濠", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 19, name: "廖崇智", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 20, name: "林怡君", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 21, name: "謝正軒", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 22, name: "張宏偉", meal: "素食", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 23, name: "張家菁", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 24, name: "鄒易恆", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 25, name: "黃陸堃", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 26, name: "黃晏瑜", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 27, name: "林家銘", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 28, name: "李聿芸", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 29, name: "黃士哲", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 30, name: "李國源", meal: "素食", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 31, name: "謝昀達", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" }
-        ];
-
-        let nextId = 32;
 
         function renderData(data) {
             const tbody = document.getElementById('orderTableBody');
             tbody.innerHTML = '';
             
-            data.forEach(order => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>#${order.id}</td>
-                    <td style="font-weight:600;">${order.name}</td>
-                    <td><span style="color:#38bdf8;">${order.meal || '-'}</span></td>
-                    <td><span style="color:#c084fc;">${order.drink || '-'}</span></td>
-                    <td style="color:var(--text-secondary);">${order.remark}</td>
-                    <td class="actions">
-                        <button class="btn-icon-action btn-edit" title="編輯" onclick="editOrder(${order.id})"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn-icon-action btn-delete" title="刪除" onclick="deleteOrder(${order.id})"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">目前尚無訂單資料</td></tr>`;
+            } else {
+                data.forEach(order => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>#${order.id}</td>
+                        <td style="font-weight:600;">${order.name}</td>
+                        <td><span style="color:#38bdf8;">${order.meal || '-'}</span></td>
+                        <td><span style="color:#c084fc;">${order.drink || '-'}</span></td>
+                        <td style="color:var(--text-secondary);">${order.remark || '-'}</td>
+                        <td class="actions">
+                            <button class="btn-icon-action btn-edit" title="編輯" onclick="editOrder('${order.id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="btn-icon-action btn-delete" title="刪除" onclick="deleteOrder('${order.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
             updateStats();
         }
 
         function updateStats() {
             document.getElementById('stat-total').innerText = orderData.length;
-            const mealCount = orderData.filter(o => o.meal).length;
-            const drinkCount = orderData.filter(o => o.drink).length;
+            const mealCount = orderData.filter(o => o.meal && o.meal !== '-' && o.meal !== '').length;
+            const drinkCount = orderData.filter(o => o.drink && o.drink !== '-' && o.drink !== '').length;
             document.getElementById('stat-meals').innerText = mealCount;
             document.getElementById('stat-drinks').innerText = drinkCount;
         }
 
-        // Modal Logic
         const modal = document.getElementById('orderModal');
         
         function openModal(id = null) {
             modal.classList.add('active');
             if (id) {
                 document.getElementById('modalTitle').innerText = '編輯訂單';
-                const order = orderData.find(o => o.id === id);
+                const order = orderData.find(o => String(o.id) === String(id));
                 document.getElementById('orderId').value = order.id;
                 document.getElementById('orderName').value = order.name;
-                document.getElementById('orderMeal').value = order.meal;
-                document.getElementById('orderDrink').value = order.drink;
+                
+                // Set meal matching options
+                const mealOpts = document.getElementById('orderMeal').options;
+                for(let opt of mealOpts) if(order.meal===opt.value) document.getElementById('orderMeal').value = opt.value;
+                
+                // Set drink matching options
+                const drinkOpts = document.getElementById('orderDrink').options;
+                for(let opt of drinkOpts) if(order.drink===opt.value) document.getElementById('orderDrink').value = opt.value;
+                
                 document.getElementById('orderRemark').value = order.remark;
             } else {
                 document.getElementById('modalTitle').innerText = '新增訂單';
@@ -355,51 +351,87 @@
             modal.classList.remove('active');
         }
 
-        function saveOrder() {
+        async function saveOrder() {
             const id = document.getElementById('orderId').value;
-            const name = document.getElementById('orderName').value;
+            const name = document.getElementById('orderName').value.trim();
             const meal = document.getElementById('orderMeal').value;
             const drink = document.getElementById('orderDrink').value;
-            const remark = document.getElementById('orderRemark').value;
+            const remark = document.getElementById('orderRemark').value.trim();
 
-            if (!name) {
-                alert('請填寫姓名');
-                return;
-            }
+            if (!name) return alert('請填寫姓名');
 
-            if (id) {
-                // Edit
-                const index = orderData.findIndex(o => o.id === parseInt(id));
-                if (index !== -1) {
-                    orderData[index] = { ...orderData[index], name, meal, drink, remark };
+            // 按照背景 GAS 設定的特別對應屬性發送
+            const payload = {
+                action: id ? 'update' : 'create',
+                id: id,
+                data: { 
+                    name: name, 
+                    status: meal,   // 對應餐點
+                    meal: drink,    // 對應飲品
+                    drink: "OK",    // 狀態為 OK
+                    notes: remark   // 備註
                 }
-            } else {
-                // Add
-                orderData.push({
-                    id: nextId++,
-                    name, meal, drink, remark
+            };
+
+            const btn = event.target || document.querySelector('.modal-footer .btn-primary');
+            const origText = btn.innerText;
+            btn.innerText = '處理中...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
                 });
-
-                // ✅ 觸發寫入雲端 Google Sheets
-                syncToGoogleSheet(name, meal, drink, remark);
+                
+                const rawText = await res.text();
+                const result = JSON.parse(rawText);
+                if (result.status === 'success') {
+                    closeModal();
+                    await fetchOrders();
+                    document.getElementById('searchInput').dispatchEvent(new Event('input'));
+                } else {
+                    alert('儲存失敗：' + result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("寫入失敗，請確認網路狀態！");
+            } finally {
+                btn.innerText = origText;
+                btn.disabled = false;
             }
-
-            closeModal();
-            renderData(orderData);
         }
 
         function editOrder(id) {
             openModal(id);
         }
 
-        function deleteOrder(id) {
-            if (confirm('確定要刪除這筆訂單嗎？')) {
-                orderData = orderData.filter(o => o.id !== id);
-                renderData(orderData);
+        async function deleteOrder(id) {
+            if (!confirm('確定要刪除這筆訂單嗎？（將同步刪除雲端資料）')) return;
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'delete', id: id }),
+                    redirect: 'follow'
+                });
+                const rawText = await res.text();
+                const result = JSON.parse(rawText);
+                if (result.status === 'success') {
+                    await fetchOrders();
+                    document.getElementById('searchInput').dispatchEvent(new Event('input'));
+                } else {
+                    alert('刪除失敗：' + result.message);
+                }
+            } catch (error) {
+                alert("刪除失敗，發生網路錯誤。");
             }
         }
 
-        // Search Logic
+        // 搜尋功能
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase();
             const filtered = orderData.filter(o => 
@@ -411,9 +443,8 @@
             renderData(filtered);
         });
 
-        // Initialize
-        renderData(orderData);
-
+        // 網頁載入時立刻拉取資料
+        fetchOrders();
     </script>
 </body>
 </html>
