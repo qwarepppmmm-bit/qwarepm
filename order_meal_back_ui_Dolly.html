@@ -181,6 +181,7 @@
                 <input type="text" id="searchInput" placeholder="搜尋姓名、餐點或飲品...">
             </div>
             <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-success" id="syncBtn" onclick="syncFromCloud()"><i class="fa-solid fa-cloud-arrow-down"></i> 同步新雲端資料</button>
                 <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
             </div>
         </div>
@@ -225,7 +226,11 @@
                         <option value="爺爺蒲燒魚霸氣會議餐盒">爺爺蒲燒魚霸氣會議餐盒</option>
                         <option value="招牌椒麻豬排霸氣會議餐盒">招牌椒麻豬排霸氣會議餐盒</option>
                         <option value="原味椒鹽炸雞霸氣會議餐盒">原味椒鹽炸雞霸氣會議餐盒</option>
-                        <option value="素食">素食</option>
+                        <option value="1.總匯特餐">1.總匯特餐</option>
+                        <option value="2.雞腿特餐">2.雞腿特餐</option>
+                        <option value="3.排骨特餐">3.排骨特餐</option>
+                        <option value="4.叉燒特餐">4.叉燒特餐</option>
+                        <option value="5.素食">5.素食</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -235,6 +240,9 @@
                         <option value="桂香青檸粉粿 無糖微冰">桂香青檸粉粿 無糖微冰</option>
                         <option value="珍珠大正紅茶拿鐵微糖微冰">珍珠大正紅茶拿鐵微糖微冰</option>
                         <option value="原片初露青茶 無糖微冰">原片初露青茶 無糖微冰</option>
+                        <option value="A.青四季春無糖微冰">A.青四季春無糖微冰</option>
+                        <option value="B.紅柚翡翠微糖微冰">B.紅柚翡翠微糖微冰</option>
+                        <option value="C.珍珠奶茶微糖微冰">C.珍珠奶茶微糖微冰</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -250,74 +258,141 @@
     </div>
 
     <script>
-        // 對接已經部署好的 Google Apps Script 目標網址
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycbyuSoD2WhNAamQ_VdL6jIf4mCsY4gapEdMDAMwnFjOndKiPLcm22Gb6FAoN9rAX0bztyg/exec';
+        // 預設靜態資料，以防雲端尚未公開或抓取失敗時仍能顯示
+        let orderData = [
+          { id: 1, name: "高念平", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "冬天不洗澡也要洗衣服吧" },
+          { id: 2, name: "游國楷", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 3, name: "謝楷評", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
+          { id: 4, name: "陳春惠", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" }
+        ];
 
-        let orderData = [];
+        let nextId = 5;
 
-        // 讀取遠端訂單資料
-        async function fetchOrders() {
-            const tbody = document.getElementById('orderTableBody');
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">資料同步中，請稍候...</td></tr>`;
-            try {
-                const response = await fetch(GAS_URL + '?action=read', { method: 'GET', redirect: 'follow' });
-                const rawText = await response.text();
-                const result = JSON.parse(rawText);
-                
-                if (result.status === 'success') {
-                    // Mapping backend variables to our UI names:
-                    // Backend returns: id, name, status(Meal), meal(Drink), drink(OK), notes(Remark)
-                    orderData = result.data.map(o => ({
-                        id: o.id,
-                        name: o.name,
-                        meal: o.status,
-                        drink: o.meal,
-                        remark: o.notes
-                    }));
-                    renderData(orderData);
-                } else {
-                    alert('資料讀取失敗：' + result.message);
-                }
-            } catch (err) {
-                console.error(err);
-                alert("雲端讀取失敗，請確認網路連線。");
-            }
-        }
-
+        // 基礎渲染功能
         function renderData(data) {
             const tbody = document.getElementById('orderTableBody');
             tbody.innerHTML = '';
             
-            if(data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 40px;">目前尚無訂單資料</td></tr>`;
-            } else {
-                data.forEach(order => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>#${order.id}</td>
-                        <td style="font-weight:600;">${order.name}</td>
-                        <td><span style="color:#38bdf8;">${order.meal || '-'}</span></td>
-                        <td><span style="color:#c084fc;">${order.drink || '-'}</span></td>
-                        <td style="color:var(--text-secondary);">${order.remark || '-'}</td>
-                        <td class="actions">
-                            <button class="btn-icon-action btn-edit" title="編輯" onclick="editOrder('${order.id}')"><i class="fa-solid fa-pen"></i></button>
-                            <button class="btn-icon-action btn-delete" title="刪除" onclick="deleteOrder('${order.id}')"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
+            data.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td style="font-weight:600;">${order.name}</td>
+                    <td><span style="color:#38bdf8;">${order.meal || '-'}</span></td>
+                    <td><span style="color:#c084fc;">${order.drink || '-'}</span></td>
+                    <td style="color:var(--text-secondary);">${order.remark}</td>
+                    <td class="actions">
+                        <button class="btn-icon-action btn-edit" title="編輯" onclick="editOrder(${order.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-icon-action btn-delete" title="刪除" onclick="deleteOrder(${order.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
             updateStats();
         }
 
         function updateStats() {
             document.getElementById('stat-total').innerText = orderData.length;
-            const mealCount = orderData.filter(o => o.meal && o.meal !== '-' && o.meal !== '').length;
-            const drinkCount = orderData.filter(o => o.drink && o.drink !== '-' && o.drink !== '').length;
+            const mealCount = orderData.filter(o => o.meal).length;
+            const drinkCount = orderData.filter(o => o.drink).length;
             document.getElementById('stat-meals').innerText = mealCount;
             document.getElementById('stat-drinks').innerText = drinkCount;
         }
 
+        // CSV 輔助解析
+        function parseCSVRow(rowText) {
+            let cols = [];
+            let cur = '';
+            let inQuotes = false;
+            for(let j = 0; j < rowText.length; j++) {
+                let c = rowText[j];
+                if (c === '"') { inQuotes = !inQuotes; }
+                else if (c === ',' && !inQuotes) { cols.push(cur.trim()); cur = ''; }
+                else { cur += c; }
+            }
+            cols.push(cur.trim());
+            return cols.map(c => c.replace(/^"|"$/g, ''));
+        }
+
+        // 完全移除 Tammy 的 GAS 寫入點，改為從新試算表抓取唯讀資料
+        async function syncFromCloud() {
+            const btn = document.getElementById('syncBtn');
+            if(btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在拉取新雲端...';
+            
+            try {
+                // 指向新的 Spreadsheet ID
+                const rawUrl = 'https://docs.google.com/spreadsheets/d/1b0NTaTznD5i2LcwfT_tXGbrk-WUjaWoxYev9A5YC7cA/export?format=csv&gid=0';
+                
+                // 使用 allorigins 代理完全繞過瀏覽器的 CORS
+                const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawUrl);
+                
+                const res = await window.fetch(proxyUrl);
+                
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("試算表權限不公開");
+                }
+                
+                const text = await res.text();
+                
+                // 如果回傳的是 HTML(登入畫面) 代表它設為了私人
+                if (text.trim().toLowerCase().startsWith("<!doctype html")) {
+                    throw new Error("私人權限");
+                }
+                
+                const lines = text.split(/\r?\n/);
+                const newData = [];
+                let currentId = 1;
+                
+                // 跳過標題列，解析資料 (假設結構不變：Col2Name, Col3Meal, Col4Drink...)
+                for (let i = 1; i < lines.length; i++) {
+                    const rowText = lines[i];
+                    if (!rowText.trim()) continue;
+                    
+                    const cols = parseCSVRow(rowText);
+                    const name = cols[1];
+                    const meal = cols[2];
+                    const drink = cols[3];
+                    
+                    if (name && name.length >= 2 && isNaN(name)) {
+                        let remark = "";
+                        for (let k = 15; k < Math.min(cols.length, 30); k++) {
+                            if (cols[k] && cols[k].length > 1 && cols[k] !== "OK" && isNaN(cols[k])) {
+                                remark = cols[k];
+                                break;
+                            }
+                        }
+                        newData.push({
+                            id: currentId++,
+                            name: name,
+                            meal: meal || "",
+                            drink: drink || "",
+                            remark: remark
+                        });
+                    }
+                }
+                
+                if(newData.length > 0) {
+                    orderData = newData;
+                    nextId = currentId;
+                    renderData(orderData);
+                    alert(`成功載入新雲端的 ${orderData.length} 筆資料！`);
+                } else {
+                    alert(`未能從新試算表中解析出符合格式的訂單，請確認該表單內容結構。`);
+                }
+            } catch (error) {
+                console.error(error);
+                if (error.message.includes("私人權限") || error.message.includes("不公開")) {
+                    alert("同步失敗！⚠️ 您的新試算表目前是「限制存取」的私密狀態。請將試算表右上角的共用設定改為「知道連結的使用者皆可查看」，網頁才能讀取喔！");
+                } else {
+                    alert("同步發生網路錯誤，請確保試算表為公開狀態。");
+                }
+            } finally {
+                if(btn) btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> 同步新雲端資料';
+            }
+        }
+
+        // Modal Logic
         const modal = document.getElementById('orderModal');
         
         function openModal(id = null) {
@@ -328,11 +403,9 @@
                 document.getElementById('orderId').value = order.id;
                 document.getElementById('orderName').value = order.name;
                 
-                // Set meal matching options
                 const mealOpts = document.getElementById('orderMeal').options;
                 for(let opt of mealOpts) if(order.meal===opt.value) document.getElementById('orderMeal').value = opt.value;
                 
-                // Set drink matching options
                 const drinkOpts = document.getElementById('orderDrink').options;
                 for(let opt of drinkOpts) if(order.drink===opt.value) document.getElementById('orderDrink').value = opt.value;
                 
@@ -351,87 +424,46 @@
             modal.classList.remove('active');
         }
 
-        async function saveOrder() {
+        function saveOrder() {
             const id = document.getElementById('orderId').value;
             const name = document.getElementById('orderName').value.trim();
             const meal = document.getElementById('orderMeal').value;
             const drink = document.getElementById('orderDrink').value;
             const remark = document.getElementById('orderRemark').value.trim();
 
-            if (!name) return alert('請填寫姓名');
-
-            // 按照背景 GAS 設定的特別對應屬性發送
-            const payload = {
-                action: id ? 'update' : 'create',
-                id: id,
-                data: { 
-                    name: name, 
-                    status: meal,   // 對應餐點
-                    meal: drink,    // 對應飲品
-                    drink: "OK",    // 狀態為 OK
-                    notes: remark   // 備註
-                }
-            };
-
-            const btn = event.target || document.querySelector('.modal-footer .btn-primary');
-            const origText = btn.innerText;
-            btn.innerText = '處理中...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
-                });
-                
-                const rawText = await res.text();
-                const result = JSON.parse(rawText);
-                if (result.status === 'success') {
-                    closeModal();
-                    await fetchOrders();
-                    document.getElementById('searchInput').dispatchEvent(new Event('input'));
-                } else {
-                    alert('儲存失敗：' + result.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert("寫入失敗，請確認網路狀態！");
-            } finally {
-                btn.innerText = origText;
-                btn.disabled = false;
+            if (!name) {
+                alert('請填寫姓名');
+                return;
             }
+
+            if (id) {
+                const index = orderData.findIndex(o => String(o.id) === String(id));
+                if (index !== -1) {
+                    orderData[index] = { ...orderData[index], name, meal, drink, remark };
+                }
+            } else {
+                orderData.push({
+                    id: nextId++,
+                    name, meal, drink, remark
+                });
+                alert('已為您新增在畫面上！(此版本已移除外部寫入功能，資料僅存於網頁內)');
+            }
+
+            closeModal();
+            renderData(orderData);
         }
 
         function editOrder(id) {
             openModal(id);
         }
 
-        async function deleteOrder(id) {
-            if (!confirm('確定要刪除這筆訂單嗎？（將同步刪除雲端資料）')) return;
-
-            try {
-                const res = await fetch(GAS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'delete', id: id }),
-                    redirect: 'follow'
-                });
-                const rawText = await res.text();
-                const result = JSON.parse(rawText);
-                if (result.status === 'success') {
-                    await fetchOrders();
-                    document.getElementById('searchInput').dispatchEvent(new Event('input'));
-                } else {
-                    alert('刪除失敗：' + result.message);
-                }
-            } catch (error) {
-                alert("刪除失敗，發生網路錯誤。");
+        function deleteOrder(id) {
+            if (confirm('確定要刪除這筆訂單嗎？')) {
+                orderData = orderData.filter(o => String(o.id) !== String(id));
+                renderData(orderData);
             }
         }
 
-        // 搜尋功能
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase();
             const filtered = orderData.filter(o => 
@@ -443,8 +475,13 @@
             renderData(filtered);
         });
 
-        // 網頁載入時立刻拉取資料
-        fetchOrders();
+        // Initialize with default local data
+        renderData(orderData);
+
+        // Optional: Auto fetch on load! 
+        window.onload = function() {
+            syncFromCloud();
+        };
     </script>
 </body>
 </html>
