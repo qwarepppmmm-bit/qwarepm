@@ -313,9 +313,9 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxyK9gLTb6GJ-PEm-eQzs3GyWQ2obbJUt6YZpjk2umnS_rpaV2HK90xjgm5LEN49BjX/exec";
 
-        function syncToCloud(name, meal, drink, remark) {
+        function syncToCloud(action, id, name, meal, drink, remark) {
             if (!GAS_URL) return;
-            const params = new URLSearchParams({ name, meal, drink, remark });
+            const params = new URLSearchParams({ action, id, name, meal, drink, remark });
             fetch(GAS_URL + "?" + params.toString(), {
                 method: "GET",
                 mode: "no-cors"
@@ -432,14 +432,16 @@
                 const index = orderData.findIndex(o => o.id === parseInt(id));
                 if (index !== -1) {
                     orderData[index] = { ...orderData[index], name, meal, drink, remark };
+                    syncToCloud('edit', orderData[index].id, name, meal, drink, remark);
                 }
             } else {
                 // Add
                 orderData.push({
-                    id: nextId++,
+                    id: nextId,
                     name, meal, drink, remark
                 });
-                syncToCloud(name, meal, drink, remark);
+                syncToCloud('add', nextId, name, meal, drink, remark);
+                nextId++;
             }
 
             closeModal();
@@ -452,6 +454,10 @@
 
         function deleteOrder(id) {
             if (confirm('確定要刪除這筆訂單嗎？')) {
+                const target = orderData.find(o => o.id === id);
+                if (target) {
+                    syncToCloud('delete', id, target.name, '', '', '');
+                }
                 orderData = orderData.filter(o => o.id !== id);
                 renderData(orderData);
             }
