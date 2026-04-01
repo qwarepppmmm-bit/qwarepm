@@ -311,34 +311,81 @@
             document.getElementById('stat-drinks').innerText = drinkCount;
         }
 
-        // 如果您想要開啟「將新增資料寫入 Google 表單」的功能，請將您 Google Apps Script 的 Web App 網址填入下方。
-        // 若保持空白，則資料只會暫存於您的瀏覽器畫面中。
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxyK9gLTb6GJ-PEm-eQzs3GyWQ2obbJUt6YZpjk2umnS_rpaV2HK90xjgm5LEN49BjX/exec";
 
-        // 獨立出一個背景同步的函數，這樣就算斷網也不會干擾畫面運作
         function syncToCloud(name, meal, drink, remark) {
-            if (!GAS_URL) {
-                console.log("未設定 GAS_URL，本地暫存一筆：", name, meal, drink, remark);
-                return;
-            }
-            
-            // 由於前台無伺服器，利用 GET + URLSearchParams 以及 no-cors 來單向盲塞，完全繞過 CORS 阻擋
-            const params = new URLSearchParams({
-                name: name,
-                meal: meal,
-                drink: drink,
-                remark: remark
-            });
-
-            // 偷偷在背景發送資料給 Google Apps Script
+            if (!GAS_URL) return;
+            const params = new URLSearchParams({ name, meal, drink, remark });
             fetch(GAS_URL + "?" + params.toString(), {
                 method: "GET",
                 mode: "no-cors"
-            }).then(() => {
-                console.log("✅ 成功發送新增指令至您的雲端資料庫！");
-            }).catch((e) => {
-                console.error("❌ 無法連上您的雲端，請確認網路！", e);
-            });
+            }).catch(console.error);
+        }
+
+        function parseCSVRow(rowText) {
+            let cols = [];
+            let cur = '';
+            let inQuotes = false;
+            for(let j = 0; j < rowText.length; j++) {
+                let c = rowText[j];
+                if (c === '"') { inQuotes = !inQuotes; }
+                else if (c === ',' && !inQuotes) { cols.push(cur.trim()); cur = ''; }
+                else { cur += c; }
+            }
+            cols.push(cur.trim());
+            return cols.map(c => c.replace(/^"|"$/g, ''));
+        }
+
+        async function syncFromCloud() {
+            try {
+                // 直接抓取 CSV 以避開 CORS 阻擋，附上時間戳記強制更新快取
+                const rawUrl = 'https://docs.google.com/spreadsheets/d/1b0NTaTznD5i2LcwfT_tXGbrk-WUjaWoxYev9A5YC7cA/export?format=csv&gid=0&t=' + Date.now();
+                const res = await fetch(rawUrl);
+                const text = await res.text();
+                
+                const lines = text.split(/\r?\n/);
+                const newData = [];
+                let currentId = 1;
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const rowText = lines[i];
+                    if (!rowText.trim()) continue;
+                    
+                    const cols = parseCSVRow(rowText);
+                    const name = cols[1];
+                    const meal = cols[2];
+                    const drink = cols[3];
+                    
+                    if (name && name.length >= 2 && isNaN(name)) {
+                        let remark = "";
+                        for (let k = 5; k < Math.min(cols.length, 10); k++) {
+                            if (cols[k] && cols[k].trim() !== "" && cols[k] !== "OK" && isNaN(cols[k]) && !cols[k].includes("特餐")) {
+                                remark = cols[k];
+                                break;
+                            }
+                        }
+                        if (!remark && cols.length > 30 && cols[31] && cols[31].includes("冬天")) {
+                            remark = cols[31];
+                        }
+
+                        newData.push({
+                            id: currentId++,
+                            name: name,
+                            meal: meal || "",
+                            drink: drink || "",
+                            remark: remark
+                        });
+                    }
+                }
+                
+                if(newData.length > 0) {
+                    orderData = newData;
+                    nextId = currentId;
+                    renderData(orderData);
+                }
+            } catch (error) {
+                console.error("雲端同步失敗", error);
+            }
         }
 
         // Modal Logic
@@ -392,8 +439,6 @@
                     id: nextId++,
                     name, meal, drink, remark
                 });
-                
-                // 觸發寫入雲端 (如果已設定 GAS_URL 且格式完整的話)
                 syncToCloud(name, meal, drink, remark);
             }
 
@@ -426,6 +471,7 @@
 
         // Initialize
         renderData(orderData);
+        syncFromCloud();
 
     </script>
 </body>
