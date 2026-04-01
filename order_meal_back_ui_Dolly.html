@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>點餐系統後台管理</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #0ea5e9;
+            --accent-gradient: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-gradient); color: var(--text-primary); min-height: 100vh; display: flex; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+        .sidebar {
+            width: 260px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--card-border);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-item {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        .nav-item.active { background: var(--accent-gradient); color: white; }
+
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header-title { font-size: 2rem; font-weight: 600; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 1rem; padding: 1.5rem; display: flex; align-items: center; gap: 1.5rem; backdrop-filter: blur(10px); transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .stat-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .stat-icon.blue { color: #0ea5e9; background: rgba(14, 165, 233, 0.2); }
+        .stat-icon.purple { color: #a855f7; background: rgba(168, 85, 247, 0.2); }
+        .stat-icon.green { color: #10b981; background: rgba(16, 185, 129, 0.2); }
+        .stat-info h3 { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .stat-info .value { font-size: 1.75rem; font-weight: 700; }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+        .search-bar {
+            display: flex; align-items: center; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border); border-radius: 2rem; padding: 0.5rem 1.5rem; min-width: 300px;
+        }
+        .search-bar input { background: transparent; border: none; color: white; padding: 0.5rem; outline: none; width: 100%; }
+        .search-bar input::placeholder { color: var(--text-secondary); }
+
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; color: white; }
+        .btn-primary { background: var(--accent-gradient); box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5); transform: translateY(-2px); }
+        .btn-icon-action { padding: 0.5rem; border-radius: 0.5rem; background: rgba(255,255,255,0.1); color: white; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-icon-action:hover { background: rgba(255,255,255,0.2); }
+        .btn-edit { color: #38bdf8; } .btn-edit:hover { background: rgba(56, 189, 248, 0.2); }
+        .btn-delete { color: #f87171; } .btn-delete:hover { background: rgba(248, 113, 113, 0.2); }
+
+        .table-container { background: var(--card-bg); border: 1px solid var(--card-border); backdrop-filter: blur(10px); border-radius: 1rem; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--card-border); }
+        th { color: var(--text-secondary); font-weight: 500; font-size: 0.875rem; text-transform: uppercase; background: rgba(0,0,0,0.2); }
+        tr { transition: background 0.3s; }
+        tr:hover { background: rgba(255,255,255,0.05); }
+        tr:last-child td { border-bottom: none; }
+        .actions { display: flex; gap: 0.5rem; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal { background: #1e293b; border: 1px solid var(--card-border); border-radius: 1.5rem; width: 100%; max-width: 500px; padding: 2rem; transform: scale(0.9); transition: transform 0.3s ease; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .close-btn { background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.875rem; }
+        .form-control { width: 100%; padding: 0.75rem 1rem; border-radius: 0.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border); color: white; outline: none; transition: 0.3s; }
+        .form-control:focus { border-color: var(--accent-primary); }
+        .form-control::placeholder { color: var(--text-secondary); }
+        select.form-control option { background: #1e293b; color: white; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; }
+        .btn-secondary { background: rgba(255,255,255,0.1); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-utensils"></i> OrderMeal AI
+        </div>
+        <nav>
+            <a class="nav-item active"><i class="fa-solid fa-chart-pie"></i> 總覽面板</a>
+            <a class="nav-item"><i class="fa-solid fa-list"></i> 訂單管理</a>
+            <a class="nav-item"><i class="fa-solid fa-gear"></i> 系統設定</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div class="header-title">點餐管理後台</div>
+            <div class="user-profile" style="display:flex; align-items:center; gap:1rem;">
+                <div style="text-align: right;">
+                    <div style="font-weight: 600;">Dolly PM</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">admin</div>
+                </div>
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--accent-gradient); display:flex; align-items:center; justify-content:center; font-weight:700;">D</div>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+                <div class="stat-info">
+                    <h3>總訂餐人數</h3>
+                    <div class="value" id="stat-total">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fa-solid fa-burger"></i></div>
+                <div class="stat-info">
+                    <h3>總餐盒數量</h3>
+                    <div class="value" id="stat-meals">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fa-solid fa-mug-hot"></i></div>
+                <div class="stat-info">
+                    <h3>總飲品數量</h3>
+                    <div class="value" id="stat-drinks">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="搜尋姓名、餐點或飲品...">
+            </div>
+            <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>餐點選擇</th>
+                        <th>飲品選擇</th>
+                        <th>備註</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableBody">
+                    <!-- Data will be populated by JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal for Create / Edit -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">新增訂單</h2>
+                <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="orderId">
+                <div class="form-group">
+                    <label>姓名</label>
+                    <input type="text" id="orderName" class="form-control" placeholder="請輸入參與者姓名">
+                </div>
+                <div class="form-group">
+                    <label>餐點選擇</label>
+                    <select id="orderMeal" class="form-control">
+                        <option value="">-- 請選擇餐點 --</option>
+                        <option value="油蔥舒肥雞霸氣會議餐盒">油蔥舒肥雞霸氣會議餐盒</option>
+                        <option value="爺爺蒲燒魚霸氣會議餐盒">爺爺蒲燒魚霸氣會議餐盒</option>
+                        <option value="招牌椒麻豬排霸氣會議餐盒">招牌椒麻豬排霸氣會議餐盒</option>
+                        <option value="原味椒鹽炸雞霸氣會議餐盒">原味椒鹽炸雞霸氣會議餐盒</option>
+                        <option value="素食">素食</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>飲品選擇</label>
+                    <select id="orderDrink" class="form-control">
+                        <option value="">-- 請選擇飲品 --</option>
+                        <option value="桂香青檸粉粿 無糖微冰">桂香青檸粉粿 無糖微冰</option>
+                        <option value="珍珠大正紅茶拿鐵微糖微冰">珍珠大正紅茶拿鐵微糖微冰</option>
+                        <option value="原片初露青茶 無糖微冰">原片初露青茶 無糖微冰</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>備註</label>
+                    <input type="text" id="orderRemark" class="form-control" placeholder="特殊需求或備註">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveOrder()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial Data from Google Sheets
+        let orderData = [
+          { id: 1, name: "高念平", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "冬天不洗澡也要洗衣服吧" },
+          { id: 2, name: "游國楷", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 3, name: "謝楷評", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
+          { id: 4, name: "陳春惠", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 5, name: "薛仁奇", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 6, name: "劉道鈞", meal: "爺爺蒲燒魚霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 7, name: "李佳馨", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "都AI" },
+          { id: 8, name: "吳文凱", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
+          { id: 9, name: "吳柔潔", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 10, name: "楊仲文", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 11, name: "蔡恩傑", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
+          { id: 12, name: "陳利和", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 13, name: "吳政憲", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 14, name: "黃明正", meal: "爺爺蒲燒魚霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 15, name: "蕭智鴻", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 16, name: "陳俊良", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 17, name: "陳詩恬", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 18, name: "彭俊濠", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 19, name: "廖崇智", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 20, name: "林怡君", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 21, name: "謝正軒", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 22, name: "張宏偉", meal: "素食", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 23, name: "張家菁", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 24, name: "鄒易恆", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 25, name: "黃陸堃", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 26, name: "黃晏瑜", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 27, name: "林家銘", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 28, name: "李聿芸", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 29, name: "黃士哲", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
+          { id: 30, name: "李國源", meal: "素食", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
+          { id: 31, name: "謝昀達", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" }
+        ];
+
+        let nextId = 32;
+
+        function renderData(data) {
+            const tbody = document.getElementById('orderTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>#${order.id}</td>
+                    <td style="font-weight:600;">${order.name}</td>
+                    <td><span style="color:#38bdf8;">${order.meal || '-'}</span></td>
+                    <td><span style="color:#c084fc;">${order.drink || '-'}</span></td>
+                    <td style="color:var(--text-secondary);">${order.remark}</td>
+                    <td class="actions">
+                        <button class="btn-icon-action btn-edit" title="編輯" onclick="editOrder(${order.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn-icon-action btn-delete" title="刪除" onclick="deleteOrder(${order.id})"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').innerText = orderData.length;
+            const mealCount = orderData.filter(o => o.meal).length;
+            const drinkCount = orderData.filter(o => o.drink).length;
+            document.getElementById('stat-meals').innerText = mealCount;
+            document.getElementById('stat-drinks').innerText = drinkCount;
+        }
+
+        // Modal Logic
+        const modal = document.getElementById('orderModal');
+        
+        function openModal(id = null) {
+            modal.classList.add('active');
+            if (id) {
+                document.getElementById('modalTitle').innerText = '編輯訂單';
+                const order = orderData.find(o => o.id === id);
+                document.getElementById('orderId').value = order.id;
+                document.getElementById('orderName').value = order.name;
+                document.getElementById('orderMeal').value = order.meal;
+                document.getElementById('orderDrink').value = order.drink;
+                document.getElementById('orderRemark').value = order.remark;
+            } else {
+                document.getElementById('modalTitle').innerText = '新增訂單';
+                document.getElementById('orderId').value = '';
+                document.getElementById('orderName').value = '';
+                document.getElementById('orderMeal').value = '';
+                document.getElementById('orderDrink').value = '';
+                document.getElementById('orderRemark').value = '';
+            }
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        function saveOrder() {
+            const id = document.getElementById('orderId').value;
+            const name = document.getElementById('orderName').value;
+            const meal = document.getElementById('orderMeal').value;
+            const drink = document.getElementById('orderDrink').value;
+            const remark = document.getElementById('orderRemark').value;
+
+            if (!name) {
+                alert('請填寫姓名');
+                return;
+            }
+
+            if (id) {
+                // Edit
+                const index = orderData.findIndex(o => o.id === parseInt(id));
+                if (index !== -1) {
+                    orderData[index] = { ...orderData[index], name, meal, drink, remark };
+                }
+            } else {
+                // Add
+                orderData.push({
+                    id: nextId++,
+                    name, meal, drink, remark
+                });
+            }
+
+            closeModal();
+            renderData(orderData);
+        }
+
+        function editOrder(id) {
+            openModal(id);
+        }
+
+        function deleteOrder(id) {
+            if (confirm('確定要刪除這筆訂單嗎？')) {
+                orderData = orderData.filter(o => o.id !== id);
+                renderData(orderData);
+            }
+        }
+
+        // Search Logic
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const filtered = orderData.filter(o => 
+                (o.name && o.name.toLowerCase().includes(query)) ||
+                (o.meal && o.meal.toLowerCase().includes(query)) ||
+                (o.drink && o.drink.toLowerCase().includes(query)) ||
+                (o.remark && o.remark.toLowerCase().includes(query))
+            );
+            renderData(filtered);
+        });
+
+        // Initialize
+        renderData(orderData);
+
+    </script>
+</body>
+</html>
