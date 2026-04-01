@@ -15,6 +15,7 @@
             --text-secondary: #94a3b8;
             --accent-primary: #0ea5e9;
             --accent-gradient: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            --success: #10b981;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-gradient); color: var(--text-primary); min-height: 100vh; display: flex; overflow-x: hidden; }
@@ -90,6 +91,10 @@
         .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; border: none; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; color: white; }
         .btn-primary { background: var(--accent-gradient); box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3); }
         .btn-primary:hover { box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5); transform: translateY(-2px); }
+        
+        .btn-success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.5); }
+        .btn-success:hover { background: rgba(16, 185, 129, 0.4); transform: translateY(-2px); }
+
         .btn-icon-action { padding: 0.5rem; border-radius: 0.5rem; background: rgba(255,255,255,0.1); color: white; border: none; cursor: pointer; transition: 0.3s; }
         .btn-icon-action:hover { background: rgba(255,255,255,0.2); }
         .btn-edit { color: #38bdf8; } .btn-edit:hover { background: rgba(56, 189, 248, 0.2); }
@@ -175,7 +180,10 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input type="text" id="searchInput" placeholder="搜尋姓名、餐點或飲品...">
             </div>
-            <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-success" id="syncBtn" onclick="syncFromCloud()"><i class="fa-solid fa-cloud-arrow-down"></i> 同步雲端資料</button>
+                <button class="btn btn-primary" onclick="openModal()"><i class="fa-solid fa-plus"></i> 新增訂單</button>
+            </div>
         </div>
 
         <div class="table-container">
@@ -214,20 +222,20 @@
                     <label>餐點選擇</label>
                     <select id="orderMeal" class="form-control">
                         <option value="">-- 請選擇餐點 --</option>
-                        <option value="油蔥舒肥雞霸氣會議餐盒">油蔥舒肥雞霸氣會議餐盒</option>
-                        <option value="爺爺蒲燒魚霸氣會議餐盒">爺爺蒲燒魚霸氣會議餐盒</option>
-                        <option value="招牌椒麻豬排霸氣會議餐盒">招牌椒麻豬排霸氣會議餐盒</option>
-                        <option value="原味椒鹽炸雞霸氣會議餐盒">原味椒鹽炸雞霸氣會議餐盒</option>
-                        <option value="素食">素食</option>
+                        <option value="1.總匯特餐">1.總匯特餐</option>
+                        <option value="2.雞腿特餐">2.雞腿特餐</option>
+                        <option value="3.排骨特餐">3.排骨特餐</option>
+                        <option value="4.叉燒特餐">4.叉燒特餐</option>
+                        <option value="5.素食">5.素食</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>飲品選擇</label>
                     <select id="orderDrink" class="form-control">
                         <option value="">-- 請選擇飲品 --</option>
-                        <option value="桂香青檸粉粿 無糖微冰">桂香青檸粉粿 無糖微冰</option>
-                        <option value="珍珠大正紅茶拿鐵微糖微冰">珍珠大正紅茶拿鐵微糖微冰</option>
-                        <option value="原片初露青茶 無糖微冰">原片初露青茶 無糖微冰</option>
+                        <option value="A.青四季春無糖微冰">A.青四季春無糖微冰</option>
+                        <option value="B.紅柚翡翠微糖微冰">B.紅柚翡翠微糖微冰</option>
+                        <option value="C.珍珠奶茶微糖微冰">C.珍珠奶茶微糖微冰</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -243,42 +251,8 @@
     </div>
 
     <script>
-        // Initial Data from Google Sheets
-        let orderData = [
-          { id: 1, name: "高念平", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "冬天不洗澡也要洗衣服吧" },
-          { id: 2, name: "游國楷", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 3, name: "謝楷評", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
-          { id: 4, name: "陳春惠", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 5, name: "薛仁奇", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 6, name: "劉道鈞", meal: "爺爺蒲燒魚霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 7, name: "李佳馨", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "都AI" },
-          { id: 8, name: "吳文凱", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
-          { id: 9, name: "吳柔潔", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 10, name: "楊仲文", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 11, name: "蔡恩傑", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "原片初露青茶 無糖微冰", remark: "" },
-          { id: 12, name: "陳利和", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 13, name: "吳政憲", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 14, name: "黃明正", meal: "爺爺蒲燒魚霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 15, name: "蕭智鴻", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 16, name: "陳俊良", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 17, name: "陳詩恬", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 18, name: "彭俊濠", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 19, name: "廖崇智", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 20, name: "林怡君", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 21, name: "謝正軒", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 22, name: "張宏偉", meal: "素食", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 23, name: "張家菁", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 24, name: "鄒易恆", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 25, name: "黃陸堃", meal: "招牌椒麻豬排霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 26, name: "黃晏瑜", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 27, name: "林家銘", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 28, name: "李聿芸", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 29, name: "黃士哲", meal: "原味椒鹽炸雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" },
-          { id: 30, name: "李國源", meal: "素食", drink: "桂香青檸粉粿 無糖微冰", remark: "" },
-          { id: 31, name: "謝昀達", meal: "油蔥舒肥雞霸氣會議餐盒", drink: "珍珠大正紅茶拿鐵微糖微冰", remark: "" }
-        ];
-
-        let nextId = 32;
+        let orderData = [];
+        let nextId = 1;
 
         function renderData(data) {
             const tbody = document.getElementById('orderTableBody');
@@ -305,10 +279,92 @@
 
         function updateStats() {
             document.getElementById('stat-total').innerText = orderData.length;
-            const mealCount = orderData.filter(o => o.meal).length;
-            const drinkCount = orderData.filter(o => o.drink).length;
+            const mealCount = orderData.filter(o => o.meal && o.meal.trim() !== "").length;
+            const drinkCount = orderData.filter(o => o.drink && o.drink.trim() !== "").length;
             document.getElementById('stat-meals').innerText = mealCount;
             document.getElementById('stat-drinks').innerText = drinkCount;
+        }
+
+        // CSV parsing function to handle quotes
+        function parseCSVRow(rowText) {
+            let cols = [];
+            let cur = '';
+            let inQuotes = false;
+            for(let j = 0; j < rowText.length; j++) {
+                let c = rowText[j];
+                if (c === '"') { inQuotes = !inQuotes; }
+                else if (c === ',' && !inQuotes) { cols.push(cur.trim()); cur = ''; }
+                else { cur += c; }
+            }
+            cols.push(cur.trim());
+            return cols.map(c => c.replace(/^"|"$/g, ''));
+        }
+
+        // Sync from Cloud logic
+        async function syncFromCloud() {
+            const btn = document.getElementById('syncBtn');
+            const originalText = btn.innerHTML;
+            try {
+                // target current week/sheet GID
+                const targetGid = '1245337375'; 
+                const url = \`https://docs.google.com/spreadsheets/d/1pHB-N2xeMXa7VyG6Ha5VzH0l0NeMu6r0Nt-G39NQVNU/gviz/tq?tqx=out:csv&gid=\${targetGid}\`;
+                
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在同步...';
+                
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const text = await res.text();
+                
+                const lines = text.split(/\\r?\\n/);
+                const newData = [];
+                let currentId = 1;
+                
+                // Start from line 1 to skip header row 0
+                for (let i = 1; i < lines.length; i++) {
+                    const rowText = lines[i];
+                    if (!rowText.trim()) continue;
+                    
+                    const cols = parseCSVRow(rowText);
+                    
+                    const name = cols[1];
+                    const meal = cols[2];
+                    const drink = cols[3];
+                    
+                    // Simple validation: needs name, and name shouldn't be a random number or empty
+                    if (name && name.length >= 2 && isNaN(name) && meal) {
+                        let remark = "";
+                        // Basic heuristic to grab remarks near column 24
+                        for (let k = 15; k < Math.min(cols.length, 30); k++) {
+                            if (cols[k] && cols[k].length > 1 && cols[k] !== "OK" && isNaN(cols[k])) {
+                                // Just a loose rule assuming long texts are remarks
+                                remark = cols[k];
+                                break;
+                            }
+                        }
+                        
+                        newData.push({
+                            id: currentId++,
+                            name: name,
+                            meal: meal,
+                            drink: drink || "",
+                            remark: remark
+                        });
+                    }
+                }
+                
+                if(newData.length > 0) {
+                    orderData = newData;
+                    nextId = currentId;
+                    renderData(orderData);
+                } else {
+                    alert(\`系統未能解析此頁籤的資料，請確認格式。\`);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("同步失敗，可能是網路問題或權限設定。");
+            } finally {
+                btn.innerHTML = originalText;
+            }
         }
 
         // Modal Logic
@@ -351,26 +407,19 @@
             }
 
             if (id) {
-                // Edit
                 const index = orderData.findIndex(o => o.id === parseInt(id));
                 if (index !== -1) {
                     orderData[index] = { ...orderData[index], name, meal, drink, remark };
                 }
             } else {
-                // Add
-                orderData.push({
-                    id: nextId++,
-                    name, meal, drink, remark
-                });
+                orderData.push({ id: nextId++, name, meal, drink, remark });
             }
 
             closeModal();
             renderData(orderData);
         }
 
-        function editOrder(id) {
-            openModal(id);
-        }
+        function editOrder(id) { openModal(id); }
 
         function deleteOrder(id) {
             if (confirm('確定要刪除這筆訂單嗎？')) {
@@ -391,8 +440,10 @@
             renderData(filtered);
         });
 
-        // Initialize
-        renderData(orderData);
+        // Initialize by syncing
+        window.onload = function() {
+            syncFromCloud();
+        };
 
     </script>
 </body>
